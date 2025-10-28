@@ -57,7 +57,12 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "typescript": "^5.7.3",
+    "ts-node": "^10.9.2",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.10.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -66,11 +71,8 @@
     "@nestjs/testing": "^11.0.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.9",
-    "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/mongoose": "^5.11.96",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^22.10.7",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/qrcode": "^1.5.5",
     "@types/speakeasy": "^2.0.10",
@@ -85,9 +87,7 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
   "jest": {
