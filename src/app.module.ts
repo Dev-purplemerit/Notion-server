@@ -21,6 +21,7 @@ import { PreferencesModule } from './preferences/preferences.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { GmailModule } from './gmail/gmail.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { CollectionModule } from './collections/collection.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { MessagingModule } from './messaging/messaging.module';
     DashboardModule,
     GmailModule,
     MessagingModule,
+    CollectionModule,
   ],
   controllers: [AppController],
   providers: [AppService, AwsS3Service],
