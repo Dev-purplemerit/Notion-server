@@ -54,3 +54,4 @@ export const ChatMessageSchema = SchemaFactory.createForClass(ChatMessage);
 ChatMessageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 ChatMessageSchema.index({ groupName: 1, createdAt: -1 });
 ChatMessageSchema.index({ receiver: 1, isRead: 1 });
+ChatMessageSchema.index({ receiver: 1, isDelivered: 1 }); // For efficient undelivered message queries

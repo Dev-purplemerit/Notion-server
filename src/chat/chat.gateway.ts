@@ -97,7 +97,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (unreadMessages.length > 0) {
         console.log(`Delivering ${unreadMessages.length} unread messages to ${email}`);
         for (const message of unreadMessages) {
-          client.emit('message', {
+          const messagePayload = {
             sender: message.sender,
             text: message.text,
             receiver: message.receiver,
@@ -108,7 +108,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             isMedia: message.isMedia,
             _id: (message as any)._id,
             createdAt: message.createdAt,
-          });
+          };
+          
+          // Emit with the correct event name based on message type
+          if (message.isMedia) {
+            client.emit('mediaMessage', messagePayload);
+          } else {
+            client.emit('message', messagePayload);
+          }
+          
           // Mark as delivered
           await this.chatService.markAsDelivered((message as any)._id.toString());
         }

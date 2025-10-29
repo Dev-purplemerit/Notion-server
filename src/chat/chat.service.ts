@@ -91,13 +91,13 @@ export class ChatService {
   }
 
   /**
-   * Get unread messages for a user
+   * Get unread messages for a user (messages that haven't been delivered yet)
    */
   async getUnreadMessages(receiver: string): Promise<ChatMessageDocument[]> {
     return await this.chatMessageModel
       .find({
         receiver: receiver,
-        isRead: false,
+        isDelivered: false, // Only fetch messages that haven't been delivered yet
       })
       .sort({ createdAt: 1 })
       .exec();
