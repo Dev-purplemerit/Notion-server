@@ -76,4 +76,42 @@ export class ProjectsController {
   ) {
     return this.projectsService.removeMember(id, userId, req.user.email);
   }
+
+  // Task management endpoints
+  @Post(':id/tasks')
+  async createTask(
+    @Param('id') projectId: string,
+    @Body() createTaskDto: any,
+    @Request() req,
+  ) {
+    return this.projectsService.createTask(projectId, createTaskDto, req.user.email);
+  }
+
+  @Get(':id/tasks')
+  async getProjectTasks(
+    @Param('id') projectId: string,
+    @Request() req,
+  ) {
+    return this.projectsService.findProjectTasks(projectId, req.user.email);
+  }
+
+  @Put(':id/tasks/:taskId')
+  async updateTask(
+    @Param('id') projectId: string,
+    @Param('taskId') taskId: string,
+    @Body() updateTaskDto: any,
+    @Request() req,
+  ) {
+    return this.projectsService.updateProjectTask(projectId, taskId, updateTaskDto, req.user.email);
+  }
+
+  @Delete(':id/tasks/:taskId')
+  async deleteTask(
+    @Param('id') projectId: string,
+    @Param('taskId') taskId: string,
+    @Request() req,
+  ) {
+    await this.projectsService.deleteProjectTask(projectId, taskId, req.user.email);
+    return { message: 'Task deleted successfully' };
+  }
 }

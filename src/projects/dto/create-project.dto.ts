@@ -34,4 +34,15 @@ export class CreateProjectDto {
   @IsDateString()
   @IsOptional()
   endDate?: string;
+
+  @IsArray()
+  @IsOptional()
+  tasks?: Array<{
+    title: string;
+    description?: string;
+    priority?: string;
+    timeTracker?: string;
+    taskStatus?: string;
+    assignedTo?: string[];
+  }>;
 }

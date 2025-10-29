@@ -52,10 +52,23 @@ export class CreateTaskDto {
   status?: string;
 
   @IsOptional()
-  @IsEnum(['low', 'medium', 'high'])
+  @IsEnum(['low', 'medium', 'high', 'Low', 'Medium', 'High'])
   priority?: string;
 
   @IsOptional()
   @IsDateString()
   dueDate?: string;
+
+  // New fields for project task board
+  @IsOptional()
+  @IsEnum(['Start', 'Break', 'End'])
+  timeTracker?: string;
+
+  @IsOptional()
+  @IsString()
+  assignedBy?: string;
+
+  @IsOptional()
+  @IsEnum(['Completed', 'In Progress', 'To Be Done', 'completed', 'todo', 'in-progress', 'review', 'done'])
+  taskStatus?: string;
 }

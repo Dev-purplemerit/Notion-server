@@ -51,7 +51,7 @@ export class Task {
   @Prop({ default: 'todo', enum: ['todo', 'in-progress', 'review', 'completed'] })
   status: string;
 
-  @Prop({ default: 'medium', enum: ['low', 'medium', 'high'] })
+  @Prop({ default: 'medium', enum: ['low', 'medium', 'high', 'Low', 'Medium', 'High'] })
   priority: string;
 
   @Prop()
@@ -59,6 +59,16 @@ export class Task {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
+
+  // New fields for project task board
+  @Prop({ enum: ['Start', 'Break', 'End'] })
+  timeTracker: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  assignedBy: Types.ObjectId;
+
+  @Prop({ default: 'To Be Done', enum: ['Completed', 'In Progress', 'To Be Done', 'completed', 'todo', 'in-progress', 'review'] })
+  taskStatus: string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
