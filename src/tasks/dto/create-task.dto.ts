@@ -48,7 +48,7 @@ export class CreateTaskDto {
   assignedTo?: string[];
 
   @IsOptional()
-  @IsEnum(['todo', 'in-progress', 'review', 'completed'])
+  @IsEnum(['todo', 'in-progress', 'review', 'completed', 'done'])
   status?: string;
 
   @IsOptional()

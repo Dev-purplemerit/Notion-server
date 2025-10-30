@@ -9,6 +9,10 @@ import { RefreshTokenService } from './services/refresh-token.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { AuditLogService } from './services/audit-log.service';
 import { AuditEventType } from './schemas/audit-log.schema';
+// COMMENTED OUT: Redis 2FA code
+// import { CacheService } from '../common/services/cache.service';
+import { EmailService } from '../common/services/email.service';
+import { LoggerService } from '../common/services/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +26,10 @@ export class AuthService {
     private refreshTokenService: RefreshTokenService,
     private tokenBlacklistService: TokenBlacklistService,
     private auditLogService: AuditLogService,
+    // COMMENTED OUT: Redis 2FA code
+    // private cacheService: CacheService,
+    private emailService: EmailService,
+    private logger: LoggerService,
   ) {}
 
   /**
@@ -174,7 +182,14 @@ export class AuthService {
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await user.save();
 
-    // TODO: Send verification email with verificationToken
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(email, name, verificationToken);
+      this.logger.log(`Verification email sent to ${email}`, 'AuthService');
+    } catch (error) {
+      this.logger.error(`Failed to send verification email to ${email}`, error.stack, 'AuthService');
+      // Continue with signup even if email fails
+    }
 
     const tokens = await this.generateTokenPair(user, ipAddress, userAgent);
 
@@ -256,10 +271,19 @@ export class AuthService {
     await this.resetFailedAttempts(user);
 
     // If 2FA is enabled, return a temporary token for 2FA verification
+    // COMMENTED OUT: Redis 2FA code
+    /*
     if (user.twoFactorEnabled) {
       const tempToken = crypto.randomBytes(32).toString('hex');
-      // Store temp token in cache/database for 5 minutes
-      // For now, we'll return it and expect the frontend to call verify2FA
+
+      // Store temp token in Redis cache for 5 minutes
+      try {
+        await this.cacheService.store2FAToken(email, tempToken, 300); // 5 minutes
+        this.logger.debug(`2FA temp token stored for ${email}`, 'AuthService');
+      } catch (error) {
+        this.logger.error(`Failed to store 2FA token for ${email}`, error.stack, 'AuthService');
+        throw new UnauthorizedException('Failed to initiate 2FA verification');
+      }
 
       await this.auditLogService.log({
         userId: (user as any)._id.toString(),
@@ -277,6 +301,7 @@ export class AuthService {
         email: user.email,
       };
     }
+    */
 
     const tokens = await this.generateTokenPair(user, ipAddress, userAgent);
 
@@ -424,8 +449,19 @@ export class AuthService {
 
   /**
    * Verify 2FA token during login
+   * COMMENTED OUT: Redis 2FA validation
    */
-  async verify2FA(email: string, token: string, ipAddress?: string, userAgent?: string) {
+  async verify2FA(email: string, token: string, tempToken: string, ipAddress?: string, userAgent?: string) {
+    // First, validate the temporary token from cache
+    // COMMENTED OUT: Redis cache validation
+    /*
+    const isValidTempToken = await this.cacheService.validate2FAToken(email, tempToken);
+    if (!isValidTempToken) {
+      this.logger.warn(`Invalid or expired 2FA temp token for ${email}`, 'AuthService');
+      throw new UnauthorizedException('Invalid or expired 2FA session');
+    }
+    */
+
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
       throw new UnauthorizedException('2FA not enabled for this user');

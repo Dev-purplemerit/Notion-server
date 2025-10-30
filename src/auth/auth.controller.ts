@@ -51,17 +51,26 @@ export class AuthController {
 
     // Set HTTP-only cookies with cross-origin support
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('accessToken', accessToken, {
+    
+    const cookieOptions: any = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+
+    // Add partitioned flag for Chrome's third-party cookie support (CHIPS)
+    if (isProduction) {
+      cookieOptions.partitioned = true;
+    }
+    
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
@@ -85,17 +94,26 @@ export class AuthController {
 
     // Set HTTP-only cookies with cross-origin support
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('accessToken', result.accessToken, {
+    
+    const cookieOptions: any = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+
+    // Add partitioned flag for Chrome's third-party cookie support (CHIPS)
+    if (isProduction) {
+      cookieOptions.partitioned = true;
+    }
+    
+    res.cookie('accessToken', result.accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -118,6 +136,8 @@ export class AuthController {
 
     const result = await this.authService.login(email, password, ipAddress, userAgent);
 
+    // COMMENTED OUT: 2FA check (Redis-based 2FA is disabled)
+    /*
     // If 2FA is required, don't set cookies yet
     if ('requires2FA' in result && result.requires2FA) {
       return res.json({
@@ -125,21 +145,31 @@ export class AuthController {
         tempToken: result.tempToken,
       });
     }
+    */
 
     // Set HTTP-only cookies with cross-origin support
     if ('accessToken' in result) {
       const isProduction = process.env.NODE_ENV === 'production';
-      res.cookie('accessToken', result.accessToken, {
+      
+      const cookieOptions: any = {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? 'none' : 'lax',
+        path: '/',
+      };
+
+      // Add partitioned flag for Chrome's third-party cookie support (CHIPS)
+      if (isProduction) {
+        cookieOptions.partitioned = true;
+      }
+      
+      res.cookie('accessToken', result.accessToken, {
+        ...cookieOptions,
         maxAge: 15 * 60 * 1000,
       });
 
       res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
+        ...cookieOptions,
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
     }
@@ -147,41 +177,54 @@ export class AuthController {
     return res.json({ success: true });
   }
 
+  // COMMENTED OUT: 2FA endpoints (Redis-based 2FA is disabled)
+  /*
   /**
    * Verify 2FA token
-   */
+   *\/
   @Post('verify-2fa')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async verify2FA(@Body() verify2FADto: Verify2FADto, @Req() req: Request, @Res() res: Response) {
-    const { email, token } = verify2FADto;
+    const { email, token, tempToken } = verify2FADto;
     const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'];
 
     const { accessToken, refreshToken } = await this.authService.verify2FA(
       email,
       token,
+      tempToken,
       ipAddress,
       userAgent,
     );
 
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('accessToken', accessToken, {
+    
+    const cookieOptions: any = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+
+    // Add partitioned flag for Chrome's third-party cookie support (CHIPS)
+    if (isProduction) {
+      cookieOptions.partitioned = true;
+    }
+    
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({ success: true });
   }
+  */
 
   /**
    * Refresh access token
@@ -205,10 +248,21 @@ export class AuthController {
     );
 
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('accessToken', accessToken, {
+    
+    const cookieOptions: any = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+
+    // Add partitioned flag for Chrome's third-party cookie support (CHIPS)
+    if (isProduction) {
+      cookieOptions.partitioned = true;
+    }
+    
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -245,9 +299,11 @@ export class AuthController {
     return this.authService.verifyEmail(token);
   }
 
+  // COMMENTED OUT: 2FA management endpoints (Redis-based 2FA is disabled)
+  /*
   /**
    * Enable 2FA - returns QR code for setup
-   */
+   *\/
   @Post('2fa/enable')
   @UseGuards(JwtAuthGuard)
   async enable2FA(@Req() req: Request) {
@@ -257,7 +313,7 @@ export class AuthController {
 
   /**
    * Verify 2FA setup and activate
-   */
+   *\/
   @Post('2fa/verify-setup')
   @UseGuards(JwtAuthGuard)
   async verify2FASetup(@Req() req: Request, @Body() body: { token: string }) {
@@ -267,13 +323,14 @@ export class AuthController {
 
   /**
    * Disable 2FA
-   */
+   *\/
   @Post('2fa/disable')
   @UseGuards(JwtAuthGuard)
   async disable2FA(@Req() req: Request, @Body() body: { password: string }) {
     const userId = (req.user as any).sub;
     return this.authService.disable2FA(userId, body.password);
   }
+  */
 
   /**
    * Check authentication status

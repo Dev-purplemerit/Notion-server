@@ -5,6 +5,7 @@ import { UsersService } from './users.service';
 import { TokenBlacklistService } from '../auth/services/token-blacklist.service';
 import { RefreshTokenService } from '../auth/services/refresh-token.service';
 import { JwtService } from '@nestjs/jwt';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('user')
 export class UsersController {
@@ -46,7 +47,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
-  async changePassword(@Body() body: { currentPassword: string; newPassword: string }, @Req() req) {
+  async changePassword(@Body() body: ChangePasswordDto, @Req() req) {
     const userId = req.user.sub;
     const currentToken = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
 

@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
+import { CommonModule } from './common/common.module';
 import { ChatModule } from './chat/chat.module';
 import { AwsS3Service } from './aws/aws-s3.service';
 import { VideoModule } from './video/video.module';
@@ -38,6 +39,7 @@ import { KanbanModule } from './kanban/kanban.module';
       }),
     }),
 
+    CommonModule,
     AuthModule,
     ChatModule,
     VideoModule,

@@ -6,13 +6,17 @@ import {
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuid } from 'uuid';
+import { LoggerService } from '../common/services/logger.service';
 
 @Injectable()
 export class AwsS3Service {
   private s3: S3Client;
   private bucket: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: LoggerService,
+  ) {
     this.s3 = new S3Client({
       region: this.configService.get<string>('AWS_REGION')!,
       credentials: {
@@ -25,7 +29,8 @@ export class AwsS3Service {
   }
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
-    console.log('Uploading file:', file.originalname, file.mimetype, file.size);
+    this.logger.log(`Uploading file: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`, 'AwsS3Service');
+
     // Replace spaces with underscores in the filename
     const sanitizedFilename = file.originalname.replace(/\s+/g, '_');
     const key = `${uuid()}-${sanitizedFilename}`;
@@ -38,10 +43,12 @@ export class AwsS3Service {
     };
 
     await this.s3.send(new PutObjectCommand(params));
+
     // Use path-style URL to avoid SSL certificate issues with bucket names containing dots
     const region = this.configService.get<string>('AWS_REGION');
     const url = `https://s3.${region}.amazonaws.com/${this.bucket}/${key}`;
-    console.log('Upload complete, accessible at:', url);
+
+    this.logger.log(`Upload complete: ${url}`, 'AwsS3Service');
     return url;
   }
 }
