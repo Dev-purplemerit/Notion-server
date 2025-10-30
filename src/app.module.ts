@@ -22,6 +22,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { GmailModule } from './gmail/gmail.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { CollectionModule } from './collections/collection.module';
+import { KanbanModule } from './kanban/kanban.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { CollectionModule } from './collections/collection.module';
     GmailModule,
     MessagingModule,
     CollectionModule,
+    KanbanModule,
   ],
   controllers: [AppController],
   providers: [AppService, AwsS3Service],

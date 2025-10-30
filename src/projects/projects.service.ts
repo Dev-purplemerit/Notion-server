@@ -90,12 +90,17 @@ export class ProjectsService {
     const user = await this.usersService.findByEmail(userEmail);
     if (!user) throw new NotFoundException('User not found');
 
-    const filter: any = {
-      $or: [
-        { createdBy: user._id },
-        { members: user._id },
-      ],
-    };
+    let filter: any = {};
+
+    // If user is admin, show all projects, otherwise filter by membership
+    if (user.role !== 'admin') {
+      filter = {
+        $or: [
+          { createdBy: user._id },
+          { members: user._id },
+        ],
+      };
+    }
 
     if (status) filter.status = status;
     if (teamId) filter.teamId = new Types.ObjectId(teamId);
@@ -122,10 +127,15 @@ export class ProjectsService {
 
     if (!project) throw new NotFoundException('Project not found');
 
-    // Check if user has access
-      const hasAccess =
-        (project.createdBy._id as any).toString() === (user._id as any).toString() ||
-        project.members.some((member: any) => (member._id as any).toString() === (user._id as any).toString());
+    // Admin users have access to all projects
+    if (user.role === 'admin') {
+      return project;
+    }
+
+    // Check if regular user has access
+    const hasAccess =
+      (project.createdBy._id as any).toString() === (user._id as any).toString() ||
+      project.members.some((member: any) => (member._id as any).toString() === (user._id as any).toString());
 
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this project');
@@ -141,8 +151,9 @@ export class ProjectsService {
     const project = await this.projectModel.findById(id);
     if (!project) throw new NotFoundException('Project not found');
 
-      if (project.createdBy.toString() !== (user._id as any).toString()) {
-      throw new ForbiddenException('Only the project creator can update this project');
+    // Admin users can update any project, regular users can only update projects they created
+    if (user.role !== 'admin' && project.createdBy.toString() !== (user._id as any).toString()) {
+      throw new ForbiddenException('Only the project creator or admin can update this project');
     }
 
     if (updateProjectDto.members) {
@@ -181,8 +192,9 @@ export class ProjectsService {
     const project = await this.projectModel.findById(id);
     if (!project) throw new NotFoundException('Project not found');
 
-      if (project.createdBy.toString() !== (user._id as any).toString()) {
-      throw new ForbiddenException('Only the project creator can delete this project');
+    // Admin users can delete any project, regular users can only delete projects they created
+    if (user.role !== 'admin' && project.createdBy.toString() !== (user._id as any).toString()) {
+      throw new ForbiddenException('Only the project creator or admin can delete this project');
     }
 
     // Delete associated team
@@ -202,8 +214,9 @@ export class ProjectsService {
     const project = await this.projectModel.findById(id);
     if (!project) throw new NotFoundException('Project not found');
 
-      if (project.createdBy.toString() !== (user._id as any).toString()) {
-      throw new ForbiddenException('Only the project creator can add members');
+    // Admin users can add members to any project, regular users can only add to projects they created
+    if (user.role !== 'admin' && project.createdBy.toString() !== (user._id as any).toString()) {
+      throw new ForbiddenException('Only the project creator or admin can add members');
     }
 
     const memberObjectId = new Types.ObjectId(userId);
@@ -237,8 +250,9 @@ export class ProjectsService {
     const project = await this.projectModel.findById(id);
     if (!project) throw new NotFoundException('Project not found');
 
-      if (project.createdBy.toString() !== (user._id as any).toString()) {
-      throw new ForbiddenException('Only the project creator can remove members');
+    // Admin users can remove members from any project, regular users can only remove from projects they created
+    if (user.role !== 'admin' && project.createdBy.toString() !== (user._id as any).toString()) {
+      throw new ForbiddenException('Only the project creator or admin can remove members');
     }
 
     project.members = project.members.filter(m => m.toString() !== userId);
@@ -312,13 +326,16 @@ export class ProjectsService {
     const project = await this.projectModel.findById(projectId);
     if (!project) throw new NotFoundException('Project not found');
 
-    // Check if user has access to the project
-    const hasAccess =
-      (project.createdBy as any).toString() === (user._id as any).toString() ||
-      project.members.some((member: any) => member.toString() === (user._id as any).toString());
+    // Admin users have access to all project tasks
+    if (user.role !== 'admin') {
+      // Check if regular user has access to the project
+      const hasAccess =
+        (project.createdBy as any).toString() === (user._id as any).toString() ||
+        project.members.some((member: any) => member.toString() === (user._id as any).toString());
 
-    if (!hasAccess) {
-      throw new ForbiddenException('You do not have access to this project');
+      if (!hasAccess) {
+        throw new ForbiddenException('You do not have access to this project');
+      }
     }
 
     return this.taskModel
