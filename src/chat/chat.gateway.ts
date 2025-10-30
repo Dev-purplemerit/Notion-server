@@ -92,10 +92,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log(`Client connected: ${email}`);
 
-      // ✅ Send any unread messages to the user upon connection
+      // ✅ Send any unread PRIVATE messages to the user upon connection
       const unreadMessages = await this.chatService.getUnreadMessages(email);
       if (unreadMessages.length > 0) {
-        console.log(`Delivering ${unreadMessages.length} unread messages to ${email}`);
+        console.log(`Delivering ${unreadMessages.length} unread private messages to ${email}`);
         for (const message of unreadMessages) {
           const messagePayload = {
             sender: message.sender,
@@ -109,16 +109,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             _id: (message as any)._id,
             createdAt: message.createdAt,
           };
-          
+
           // Emit with the correct event name based on message type
           if (message.isMedia) {
             client.emit('mediaMessage', messagePayload);
           } else {
             client.emit('message', messagePayload);
           }
-          
+
           // Mark as delivered
           await this.chatService.markAsDelivered((message as any)._id.toString());
+        }
+      }
+
+      // ✅ Send any undelivered GROUP messages to the user upon connection
+      const unreadGroupMessages = await this.chatService.getUndeliveredGroupMessages(email);
+      if (unreadGroupMessages.length > 0) {
+        console.log(`Delivering ${unreadGroupMessages.length} unread group messages to ${email}`);
+        for (const message of unreadGroupMessages) {
+          const messagePayload = {
+            sender: message.sender,
+            text: message.text,
+            groupName: message.groupName,
+            mode: message.mode,
+            mediaUrl: message.mediaUrl,
+            filename: message.filename,
+            mimetype: message.mimetype,
+            isMedia: message.isMedia,
+            _id: (message as any)._id,
+            createdAt: message.createdAt,
+          };
+
+          // Emit as groupMessage
+          if (message.isMedia) {
+            client.emit('mediaMessage', messagePayload);
+          } else {
+            client.emit('groupMessage', messagePayload);
+          }
         }
       }
     } catch (error) {
@@ -181,8 +208,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`Private message from ${sender} to ${receiver}: ${text} - Saved for later delivery`);
     }
 
-    // ✅ Don't echo back to sender - frontend adds message optimistically
-    // This prevents duplicate messages in the sender's chat
+    // ✅ Send confirmation back to sender with saved flag
+    client.emit('message:sent', {
+      ...messagePayload,
+      delivered: receiverSocket ? true : false,
+    });
   }
 
   /**
@@ -257,7 +287,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       createdAt: savedMessage.createdAt,
     };
 
+    // Send to all other group members (excluding sender)
     client.to(groupName).emit('groupMessage', groupPayload);
+
+    // ✅ Send confirmation back to sender
+    client.emit('groupMessage:sent', groupPayload);
 
     console.log(`Group message in ${groupName} from ${sender}: ${text}`);
   }
@@ -431,13 +465,16 @@ async handleUploadMedia(
       } else {
         console.log(`Media message saved for offline receiver: ${receiver}`);
       }
-      // ✅ Echo back to sender (needed for media - frontend doesn't add optimistically)
-      client.emit('mediaMessage', messagePayload);
+      // ✅ Send confirmation back to sender (consistent with text messages)
+      client.emit('mediaMessage:sent', {
+        ...messagePayload,
+        delivered: receiverSocket ? true : false,
+      });
     } else if (mode === 'group' && groupName) {
       messagePayload['groupName'] = groupName;
       client.to(groupName).emit('mediaMessage', messagePayload);
-      // ✅ Echo back to sender (needed for media - frontend doesn't add optimistically)
-      client.emit('mediaMessage', messagePayload);
+      // ✅ Send confirmation back to sender (consistent with text messages)
+      client.emit('mediaMessage:sent', messagePayload);
     } else {
       client.emit('error', 'Invalid media message data');
       console.log('Invalid media message data: missing receiver or groupName');

@@ -104,6 +104,37 @@ export class ChatService {
   }
 
   /**
+   * Get undelivered group messages for a user since their last connection
+   * This fetches group messages from groups the user is a member of
+   */
+  async getUndeliveredGroupMessages(
+    userEmail: string,
+    lastSeenTimestamp?: Date,
+  ): Promise<ChatMessageDocument[]> {
+    // Get all groups the user has participated in
+    const userGroups = await this.getUserGroups(userEmail);
+
+    if (userGroups.length === 0) {
+      return [];
+    }
+
+    // If no timestamp provided, use a reasonable default (e.g., last 7 days)
+    const since = lastSeenTimestamp || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Fetch all group messages from user's groups that are newer than their last seen time
+    // and were not sent by the user themselves
+    return await this.chatMessageModel
+      .find({
+        mode: 'group',
+        groupName: { $in: userGroups },
+        sender: { $ne: userEmail }, // Don't send user's own messages back
+        createdAt: { $gt: since },
+      })
+      .sort({ createdAt: 1 })
+      .exec();
+  }
+
+  /**
    * Get all conversations for a user (list of users they've chatted with)
    */
   async getUserConversations(userEmail: string): Promise<any[]> {
