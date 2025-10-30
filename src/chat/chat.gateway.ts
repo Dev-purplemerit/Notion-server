@@ -93,6 +93,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`Client connected: ${email}`);
 
       // ✅ Send any unread PRIVATE messages to the user upon connection
+      // This enables offline message delivery - messages sent while user was offline
+      // The improved deduplication (using MongoDB IDs + createdAt) prevents duplicates
       const unreadMessages = await this.chatService.getUnreadMessages(email);
       if (unreadMessages.length > 0) {
         console.log(`Delivering ${unreadMessages.length} unread private messages to ${email}`);
@@ -117,7 +119,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             client.emit('message', messagePayload);
           }
 
-          // Mark as delivered
+          // Mark as delivered so it won't be sent again
           await this.chatService.markAsDelivered((message as any)._id.toString());
         }
       }
