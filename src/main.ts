@@ -7,6 +7,9 @@ import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Cookie parser middleware (required for reading cookies)
+  app.use(cookieParser());
+
   // Security headers
   app.use(helmet({
     contentSecurityPolicy: {
@@ -19,9 +22,6 @@ async function bootstrap() {
     },
     crossOriginEmbedderPolicy: false,
   }));
-
-  // Cookie parser for HTTP-only cookies
-  app.use(cookieParser());
 
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
@@ -36,8 +36,7 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   await app.listen(process.env.PORT ?? 3000);

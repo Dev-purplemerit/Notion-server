@@ -119,6 +119,8 @@ export class AuthController {
 
     return res.json({
       success: true,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       emailVerificationRequired: result.emailVerificationRequired,
     });
   }
@@ -171,6 +173,13 @@ export class AuthController {
       res.cookie('refreshToken', result.refreshToken, {
         ...cookieOptions,
         maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
+
+      // Also return tokens in response body for header-based auth
+      return res.json({
+        success: true,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       });
     }
 
